@@ -25,14 +25,16 @@ curl -L https://www.opscode.com/chef/install.sh | bash
 SCRIPT
   # config.vm.provision "shell", inline: $once_chef 
   config.vm.provision :chef_solo do |chef|
-    chef.add_recipe "base::tmpfs"
+  #  chef.add_recipe "base::tmpfs"  # XXX!
     chef.add_recipe "base::ntp"
     chef.add_recipe "base::timezone"
+    chef.add_recipe "base::epel"
     chef.add_recipe "cloudera::prereq"
     chef.add_recipe "cloudera::cdh4"
     chef.add_recipe "cloudera::pseudo_yarn"
     chef.add_recipe "cloudera::hive"
     chef.add_recipe "cloudera::impala"
+  #   chef.add_recipe "cloudera::hue"
   #   chef.cookbooks_path = "./cookbooks"
   #   chef.roles_path = "../my-recipes/roles"
   #   chef.data_bags_path = "../my-recipes/data_bags"

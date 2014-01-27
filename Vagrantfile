@@ -17,7 +17,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.synced_folder "../data", "/vagrant_data"
   config.vm.provider :virtualbox do |vb|
   #   vb.gui = true
-    vb.customize ["modifyvm", :id, "--memory", "1024"]
+    vb.customize ["modifyvm", :id, "--memory", "4096"]
+    vb.customize ["modifyvm", :id, "--cpus", "2"]
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
   end
   $once_chef = <<SCRIPT
 rpm -q chef && exit
@@ -30,10 +32,15 @@ SCRIPT
     chef.add_recipe "base::timezone"
     chef.add_recipe "base::epel"
     chef.add_recipe "cloudera::prereq"
-    chef.add_recipe "cloudera::cdh4"
-    chef.add_recipe "cloudera::pseudo_yarn"
-    chef.add_recipe "cloudera::hive"
-    chef.add_recipe "cloudera::impala"
+    chef.add_recipe "apache::hadoop22"
+    chef.add_recipe "apache::hive012"
+    chef.add_recipe "presto::server"
+    chef.add_recipe "presto::discovery"
+    chef.add_recipe "presto::cli"
+  #  chef.add_recipe "cloudera::cdh4"
+  #  chef.add_recipe "cloudera::pseudo_yarn"
+  #  chef.add_recipe "cloudera::hive"
+  #  chef.add_recipe "cloudera::impala"
   #   chef.add_recipe "cloudera::hue"
   #   chef.cookbooks_path = "./cookbooks"
   #   chef.roles_path = "../my-recipes/roles"

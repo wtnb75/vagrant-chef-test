@@ -9,5 +9,6 @@ mount "/tmp" do
   pass 0
   fstype "tmpfs"
   device "none"
-  action [:mount, :enable]
+  #action [:mount, :enable]
+  action :enable
 end

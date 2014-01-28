@@ -27,3 +27,11 @@ template "/etc/hosts" do
   owner "root"
   group "root"
 end
+
+bash "ssh-nopass" do
+  cwd "/etc/ssh"
+  code <<-EOH
+sed -i.bak 's/^.*PermitEmpty.*$/PermitEmptyPasswords yes/g;' sshd_config
+EOH
+  user "root"
+end

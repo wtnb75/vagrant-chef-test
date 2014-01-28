@@ -16,23 +16,24 @@ bash "extract-ps" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
     tar xfz "#{Chef::Config[:file_cache_path]}/presto-server-0.58.tar.gz" -C /opt
+    chown -R hadoop:hadoop /opt/presto-server-0.58
 EOH
   not_if {::File.exists?("/opt/presto-server-0.58")}
 end
 
 directory "/opt/presto-server-0.58/etc" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
 end
 
 directory "/opt/presto-server-0.58/data" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
 end
 
-uuid=`uuidgen`
+uuid=`uuidgen`.strip()
 
 file "/opt/presto-server-0.58/etc/node.properties" do
   content <<-EOH
@@ -41,9 +42,9 @@ node.id=#{uuid}
 node.data-dir=/opt/presto-server-0.58/data
 EOH
   mode 0644
-  owner "root"
-  group "root"
-  action :create
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_missing
 end
 
 file "/opt/presto-server-0.58/etc/jvm.config" do
@@ -62,9 +63,9 @@ file "/opt/presto-server-0.58/etc/jvm.config" do
 -Xbootclasspath/p:/opt/presto-server-0.58/lib/floatingdecimal-0.1.jar
 EOH
   mode 0644
-  owner "root"
-  group "root"
-  action :create
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_missing
 end
 
 file "/opt/presto-server-0.58/etc/config.properties" do
@@ -79,9 +80,9 @@ discovery-server.enabled=true
 discovery.uri=http://localhost:8080
 EOH
   mode 0644
-  owner "root"
-  group "root"
-  action :create
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_missing
 end
 
 file "/opt/presto-server-0.58/etc/log.properties" do
@@ -89,16 +90,16 @@ file "/opt/presto-server-0.58/etc/log.properties" do
 com.facebook.presto=DEBUG
 EOH
   mode 0644
-  owner "root"
-  group "root"
-  action :create
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_missing
 end
 
 directory "/opt/presto-server-0.58/etc/catalog" do
   mode 0755
-  owner "root"
-  group "root"
-  action :create
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_missing
 end
 
 file "/opt/presto-server-0.58/etc/catalog/jmx.properties" do
@@ -106,9 +107,9 @@ file "/opt/presto-server-0.58/etc/catalog/jmx.properties" do
 connector.name=jmx
 EOH
   mode 0644
-  owner "root"
-  group "root"
-  action :create
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_missing
 end
 
 file "/opt/presto-server-0.58/etc/catalog/hive.properties" do
@@ -117,7 +118,28 @@ connector.name=hive-hadoop2
 hive.metastore.uri=thrift://localhost:9083
 EOH
   mode 0644
-  owner "root"
-  group "root"
-  action :create
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_missing
+end
+
+directory "/opt/boot" do
+  mode 0755
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_not_exists
+end
+
+file "/opt/boot/03-presto-server.sh" do
+  content <<-EOH
+#! /bin/sh
+
+export JAVA_HOME=/usr/lib/jvm/java
+
+/opt/presto-server-0.58/bin/launcher start
+EOH
+  mode 0755
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_not_exists
 end

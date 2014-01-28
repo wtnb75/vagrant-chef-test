@@ -27,7 +27,7 @@ curl -L https://www.opscode.com/chef/install.sh | bash
 SCRIPT
   # config.vm.provision "shell", inline: $once_chef 
   config.vm.provision :chef_solo do |chef|
-  #  chef.add_recipe "base::tmpfs"  # XXX!
+    chef.add_recipe "base::tmpfs"
     chef.add_recipe "base::ntp"
     chef.add_recipe "base::timezone"
     chef.add_recipe "base::epel"
@@ -37,6 +37,7 @@ SCRIPT
     chef.add_recipe "presto::server"
     chef.add_recipe "presto::discovery"
     chef.add_recipe "presto::cli"
+    chef.add_recipe "apache::maven"
   #  chef.add_recipe "cloudera::cdh4"
   #  chef.add_recipe "cloudera::pseudo_yarn"
   #  chef.add_recipe "cloudera::hive"

@@ -6,3 +6,5 @@
 #
 # All rights reserved - Do Not Redistribute
 #
+include_recipe "apache::hadoop22"
+include_recipe "apache::hive012"

@@ -17,10 +17,9 @@ template "/etc/ntp/step-tickers" do
   mode 0644
 end
 
-%w(ntpdate ntpd).each do |svc|
-  service svc do
-    action [:enable, :stop]
-  end
+service "ntpd-stop" do
+  service_name "ntpd"
+  action [:enable, :stop]
 end
 
 %w(ntpdate ntpd).each do |svc|

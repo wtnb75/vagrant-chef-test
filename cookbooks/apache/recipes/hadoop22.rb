@@ -1,4 +1,35 @@
 
+group "hadoop" do
+  append true
+  system true
+  members "vagrant"
+  action :create
+end
+
+user "hadoop" do
+  shell "/bin/sh"
+  gid  "hadoop"
+  password ""
+  home "/opt/hadoop-2.2.0"
+  action :create
+end
+
+bash "addenvssh" do
+  cwd "/etc/ssh"
+  code <<-EOH
+if ! grep -q JAVA_HOME sshd_config ; then
+  echo "AcceptEnv JAVA_HOME HADOOP_HOME HIVE_HOME" >> sshd_config
+fi
+if ! grep -q JAVA_HOME ssh_config ; then
+  echo "	SendEnv JAVA_HOME HADOOP_HOME HIVE_HOME" >> ssh_config
+fi
+EOH
+end
+
+service "sshd" do
+  action :restart
+end
+
 remote_file "#{Chef::Config[:file_cache_path]}/hadoop-2.2.0.tar.gz" do
   source "http://ftp.meisei-u.ac.jp/mirror/apache/dist/hadoop/common/hadoop-2.2.0/hadoop-2.2.0.tar.gz"
   action :create
@@ -8,6 +39,7 @@ bash "extract-hadoop22" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
     tar xfz "#{Chef::Config[:file_cache_path]}/hadoop-2.2.0.tar.gz" -C /opt
+    chown -R hadoop:hadoop /opt/hadoop-2.2.0
 EOH
   not_if {::File.exists?("/opt/hadoop-2.2.0")}
 end
@@ -18,8 +50,19 @@ export HADOOP_HOME=/opt/hadoop-2.2.0
 export HADOOP_CONF_DIR=${HADOOP_HOME}/etc/hadoop
 export HADOOP_COMMON_LIB_NATIVE_DIR=${HADOOP_HOME}/lib/native
 export HADOOP_OPTS="-Djava.library.path=${HADOOP_HOME}/lib"
+export PATH=$PATH:${HADOOP_HOME}/bin
 EOH
   mode 0644
+  owner "root"
+  group "root"
+  action :create
+end
+
+file "/etc/sudoers.d/hadoop" do
+  content <<-EOH
+Defaults env_keep+="HADOOP_HOME HADOOP_CONF_DIR HADOOP_COMMON_LIB_NATIVE_DIR HADOOP_OPTS"
+Defaults exempt_group = "wheel"
+EOH
   owner "root"
   group "root"
   action :create
@@ -45,15 +88,15 @@ file "/opt/hadoop-2.2.0/etc/hadoop/core-site.xml" do
 </configuration>
 EOH
   mode 0644
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
 directory "/opt/hadoop-2.2.0/cache" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
@@ -86,22 +129,22 @@ file "/opt/hadoop-2.2.0/etc/hadoop/mapred-site.xml" do
 </configuration>
 EOH
   mode 0644
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
 directory "/opt/hadoop-2.2.0/hdfs" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
 directory "/opt/hadoop-2.2.0/hdfs/cache" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
@@ -141,36 +184,36 @@ file "/opt/hadoop-2.2.0/etc/hadoop/hdfs-site.xml" do
 </configuration>
 EOH
   mode 0644
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
 directory "/opt/hadoop-2.2.0/yarn" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
 directory "/opt/hadoop-2.2.0/yarn/cache" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
 directory "/opt/hadoop-2.2.0/yarn/containers" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
 directory "/opt/hadoop-2.2.0/yarn/apps" do
   mode 0755
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
@@ -179,9 +222,9 @@ file "/opt/hadoop-2.2.0/etc/hadoop/yarn-site.xml" do
 <?xml version="1.0" encoding="UTF-8"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
-  <property>
+   <property>
     <name>yarn.nodemanager.aux-services</name>
-    <value>mapreduce.shuffle</value>
+    <value>mapreduce_shuffle</value>
   </property>
   <property>
     <name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
@@ -212,14 +255,39 @@ file "/opt/hadoop-2.2.0/etc/hadoop/yarn-site.xml" do
 </configuration>
 EOH
   mode 0644
-  owner "root"
-  group "root"
+  owner "hadoop"
+  group "hadoop"
   action :create
 end
 
-bash "alt-hadoop" do
-  code <<-EOH
-alternatives --install /usr/bin/hadoop hadoop22 /opt/hadoop-2.2.0/bin/hadoop 220 \
-  --slave /usr/bin/hdfs hdfs22 /opt/hadoop-2.2.0/bin/hdfs
+#bash "init-namenode" do
+#  user "hadoop"
+#  code <<-EOH
+#/opt/hadoop-2.2.0/bin/hdfs namenode -format
+#EOH
+#end
+
+directory "/opt/boot" do
+  mode 0755
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_not_exists
+end
+
+file "/opt/boot/01-hadoop.sh" do
+  content <<-EOH
+#! /bin/sh
+
+export HADOOP_HOME=/opt/hadoop-2.2.0
+HADOOP_BIN=${HADOOP_HOME}/bin
+HADOOP_SBIN=${HADOOP_HOME}/sbin
+export JAVA_HOME=/usr/lib/jvm/java
+
+$HADOOP_SBIN/start-dfs.sh &
+$HADOOP_SBIN/start-yarn.sh &
 EOH
+  mode 0755
+  owner "hadoop"
+  group "hadoop"
+  action :create_if_not_exists
 end

@@ -18,6 +18,9 @@ bash "extract-pd" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
     tar xfz "#{Chef::Config[:file_cache_path]}/discovery-server-#{node[:prestodver]}.tar.gz" -C /opt
+    if [ "#{node[:prestoddir]}" != "/opt/discovery-server-#{node[:prestodver]}" ] ; then
+      mv /opt/discovery-server-#{node[:prestodver]} #{node[:prestoddir]}
+    fi
     chown -R hadoop:hadoop #{node[:prestoddir]}
 EOH
   not_if {::File.exists?("#{node[:prestoddir]}")}

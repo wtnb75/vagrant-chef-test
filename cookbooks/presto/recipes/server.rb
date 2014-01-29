@@ -18,8 +18,8 @@ bash "extract-ps" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
     tar xfz "#{Chef::Config[:file_cache_path]}/presto-server-#{node[:prestosver]}.tar.gz" -C /opt
-    if [ "#{node[:prestosdir]}" != "/opt/presto-server-#{node[:prestosver]}"
-      mv #{node[:prestosdir]} /opt/presto-server-#{node[:prestosver]}
+    if [ "#{node[:prestosdir]}" != "/opt/presto-server-#{node[:prestosver]}" ] ; then
+      mv /opt/presto-server-#{node[:prestosver]} #{node[:prestosdir]}
     fi
     chown -R hadoop:hadoop #{node[:prestosdir]}
 EOH

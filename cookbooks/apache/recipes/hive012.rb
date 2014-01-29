@@ -1,23 +1,25 @@
 
-remote_file "#{Chef::Config[:file_cache_path]}/hive-0.12.0-bin.tar.gz" do
-  source "http://ftp.yz.yamagata-u.ac.jp/pub/network/apache/hive/hive-0.12.0/hive-0.12.0-bin.tar.gz"
+include_recipe "apache::base"
+
+remote_file "#{Chef::Config[:file_cache_path]}/hive-#{node[:hivever]}-bin.tar.gz" do
+  source "http://ftp.yz.yamagata-u.ac.jp/pub/network/apache/hive/hive-#{node[:hivever]}/hive-#{node[:hivever]}-bin.tar.gz"
   action :create
 end
 
 bash "extract-hive012" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
-    tar xfz "#{Chef::Config[:file_cache_path]}/hive-0.12.0-bin.tar.gz" -C /opt
-    mv /opt/hive-0.12.0-bin /opt/hive-0.12.0
-    chown -R hadoop:hadoop /opt/hive-0.12.0
+    tar xfz "#{Chef::Config[:file_cache_path]}/hive-#{node[:hivever]}-bin.tar.gz" -C /opt
+    mv #{node[:hivedir]}-bin #{node[:hivedir]}
+    chown -R hadoop:hadoop #{node[:hivedir]}
 EOH
-  not_if {::File.exists?("/opt/hive-0.12.0")}
+  not_if {::File.exists?("#{node[:hivedir]}")}
 end
 
 file "/etc/profile.d/hive012.sh" do
   content <<-EOH
-export HIVE_HOME=/opt/hive-0.12.0
-export HIVE_CONF_DIR=/opt/hive-0.12.0/conf
+export HIVE_HOME=#{node[:hivedir]}
+export HIVE_CONF_DIR=${HIVE_HOME}/conf
 export PATH=$PATH:${HIVE_HOME}/bin
 EOH
   owner "root"
@@ -29,21 +31,21 @@ end
 file "/etc/sudoers.d/hive" do
   content <<-EOH
 Defaults env_keep+="HIVE_HOME HIVE_CONF_DIR"
-Defaults secure_path+="/opt/hive-0.12.0/bin"
+Defaults secure_path+="#{node[:hivedir]}/bin"
 EOH
   owner "root"
   group "root"
   action :create
 end
 
-file "/opt/hive-0.12.0/conf/hive-site.xml" do
+file "#{node[:hivedir]}/conf/hive-site.xml" do
   content <<-EOH
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <configuration>
 <property>
   <name>javax.jdo.option.ConnectionURL</name>
-  <value>jdbc:derby:;databaseName=/opt/hive-0.12.0/metastore/metastore_db;create=true</value>
+  <value>jdbc:derby:;databaseName=#{node[:hivedir]}/metastore/metastore_db;create=true</value>
 </property>
 <property>
   <name>javax.jdo.option.ConnectionDriverName</name>
@@ -61,25 +63,19 @@ EOH
   action :create
 end
 
-directory "/opt/boot" do
-  mode 0755
-  owner "hadoop"
-  group "hadoop"
-  action :create_if_not_exists
-end
-
 file "/opt/boot/02-hive.sh" do
   content <<-EOH
 #! /bin/sh
 
-export HIVE_HOME=/opt/hive-0.12.0
+export HIVE_HOME=#{node[:hivedir]}
 export JAVA_HOME=/usr/lib/jvm/java
 
 [ -d $HIVE_HOME/log ] || mkdir $HIVE_HOME/log
-$HIVE_HOME/bin/hive --server metastore > $HIVE_HOME/log/metastore.log 2>&1 &
+$HIVE_HOME/bin/hive --server metastore >> $HIVE_HOME/log/metastore.log 2>&1 &
+$HIVE_HOME/bin/hiveserver2 >> $HIVE_HOME/log/hiveserver.log 2>&1 &
 EOH
   mode 0755
   owner "hadoop"
   group "hadoop"
-  action :create_if_not_exists
+  action :create_if_missing
 end

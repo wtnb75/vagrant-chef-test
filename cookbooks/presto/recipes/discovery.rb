@@ -7,41 +7,43 @@
 # All rights reserved - Do Not Redistribute
 #
 
-remote_file "#{Chef::Config[:file_cache_path]}/discovery-server-1.16.tar.gz" do
-  source "http://central.maven.org/maven2/io/airlift/discovery/discovery-server/1.16/discovery-server-1.16.tar.gz"
+include_recipe "apache::base"
+
+remote_file "#{Chef::Config[:file_cache_path]}/discovery-server-#{node[:prestodver]}.tar.gz" do
+  source "http://central.maven.org/maven2/io/airlift/discovery/discovery-server/#{node[:prestodver]}/discovery-server-#{node[:prestodver]}.tar.gz"
   action :create
 end
 
 bash "extract-pd" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
-    tar xfz "#{Chef::Config[:file_cache_path]}/discovery-server-1.16.tar.gz" -C /opt
-    chown -R hadoop:hadoop /opt/discovery-server-1.16
+    tar xfz "#{Chef::Config[:file_cache_path]}/discovery-server-#{node[:prestodver]}.tar.gz" -C /opt
+    chown -R hadoop:hadoop #{node[:prestoddir]}
 EOH
-  not_if {::File.exists?("/opt/discovery-server-1.16")}
+  not_if {::File.exists?("#{node[:prestoddir]}")}
 end
 
-directory "/opt/discovery-server-1.16/etc" do
+directory "#{node[:prestoddir]}/etc" do
   mode 0755
   owner "hadoop"
   group "hadoop"
-  action :create_if_missing
+  action :create
 end
 
-directory "/opt/discovery-server-1.16/data" do
+directory "#{node[:prestoddir]}/data" do
   mode 0755
   owner "hadoop"
   group "hadoop"
-  action :create_if_missing
+  action :create
 end
 
 uuid=`uuidgen`.strip()
 
-file "/opt/discovery-server-1.16/etc/node.properties" do
+file "#{node[:prestoddir]}/etc/node.properties" do
   content <<-EOH
 node.environment=production
 node.id=#{uuid}
-node.data-dir=/opt/discovery-server-1.16/data
+node.data-dir=#{node[:prestoddir]}/data
 EOH
   mode 0644
   owner "hadoop"
@@ -49,7 +51,7 @@ EOH
   action :create_if_missing
 end
 
-file "/opt/discovery-server-1.16/etc/jvm.config" do
+file "#{node[:prestoddir]}/etc/jvm.config" do
   content <<-EOH
 -server
 -Xmx1G
@@ -65,7 +67,7 @@ EOH
   action :create_if_missing
 end
 
-file "/opt/discovery-server-1.16/etc/config.properties" do
+file "#{node[:prestoddir]}/etc/config.properties" do
   content <<-EOH
 http-server.http.port=8411
 EOH
@@ -75,24 +77,17 @@ EOH
   action :create_if_missing
 end
 
-directory "/opt/boot" do
-  mode 0755
-  owner "hadoop"
-  group "hadoop"
-  action :create_if_not_exists
-end
-
 file "/opt/boot/03-presto-discovery.sh" do
   content <<-EOH
 #! /bin/sh
 
 export JAVA_HOME=/usr/lib/jvm/java
 
-/opt/discovery-server-1.16/bin/launcher start
+#{node[:prestoddir]}/bin/launcher start
 EOH
   mode 0755
   owner "hadoop"
   group "hadoop"
-  action :create_if_not_exists
+  action :create_if_missing
 end
 

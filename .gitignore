@@ -4,4 +4,4 @@
 .vagrant/
 
 *~
-
+*.bak

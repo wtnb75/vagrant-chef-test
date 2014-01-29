@@ -1,0 +1,5 @@
+default["prestosver"]="0.58"
+default["prestodver"]="1.16"
+default["prestocver"]="0.58"
+default["prestosdir"]="/opt/presto-server-#{default['prestosver']}"
+default["prestoddir"]="/opt/discovery-server-#{default['prestodver']}"

@@ -7,27 +7,32 @@
 # All rights reserved - Do Not Redistribute
 #
 
-remote_file "#{Chef::Config[:file_cache_path]}/presto-server-0.58.tar.gz" do
-  source "http://central.maven.org/maven2/com/facebook/presto/presto-server/0.58/presto-server-0.58.tar.gz"
+include_recipe "apache::base"
+
+remote_file "#{Chef::Config[:file_cache_path]}/presto-server-#{node[:prestosver]}.tar.gz" do
+  source "http://central.maven.org/maven2/com/facebook/presto/presto-server/#{node[:prestosver]}/presto-server-#{node[:prestosver]}.tar.gz"
   action :create
 end
 
 bash "extract-ps" do
   cwd Chef::Config[:file_cache_path]
   code <<-EOH
-    tar xfz "#{Chef::Config[:file_cache_path]}/presto-server-0.58.tar.gz" -C /opt
-    chown -R hadoop:hadoop /opt/presto-server-0.58
+    tar xfz "#{Chef::Config[:file_cache_path]}/presto-server-#{node[:prestosver]}.tar.gz" -C /opt
+    if [ "#{node[:prestosdir]}" != "/opt/presto-server-#{node[:prestosver]}"
+      mv #{node[:prestosdir]} /opt/presto-server-#{node[:prestosver]}
+    fi
+    chown -R hadoop:hadoop #{node[:prestosdir]}
 EOH
-  not_if {::File.exists?("/opt/presto-server-0.58")}
+  not_if {::File.exists?("#{node[:prestosdir]}")}
 end
 
-directory "/opt/presto-server-0.58/etc" do
+directory "#{node[:prestosdir]}/etc" do
   mode 0755
   owner "hadoop"
   group "hadoop"
 end
 
-directory "/opt/presto-server-0.58/data" do
+directory "#{node[:prestosdir]}/data" do
   mode 0755
   owner "hadoop"
   group "hadoop"
@@ -35,11 +40,11 @@ end
 
 uuid=`uuidgen`.strip()
 
-file "/opt/presto-server-0.58/etc/node.properties" do
+file "#{node[:prestosdir]}/etc/node.properties" do
   content <<-EOH
 node.environment=production
 node.id=#{uuid}
-node.data-dir=/opt/presto-server-0.58/data
+node.data-dir=#{node[:prestosdir]}/data
 EOH
   mode 0644
   owner "hadoop"
@@ -47,7 +52,7 @@ EOH
   action :create_if_missing
 end
 
-file "/opt/presto-server-0.58/etc/jvm.config" do
+file "#{node[:prestosdir]}/etc/jvm.config" do
   content <<-EOH
 -server
 -Xmx1G
@@ -60,7 +65,7 @@ file "/opt/presto-server-0.58/etc/jvm.config" do
 -XX:PermSize=150M
 -XX:MaxPermSize=150M
 -XX:ReservedCodeCacheSize=150M
--Xbootclasspath/p:/opt/presto-server-0.58/lib/floatingdecimal-0.1.jar
+-Xbootclasspath/p:#{node[:prestosdir]}/lib/floatingdecimal-0.1.jar
 EOH
   mode 0644
   owner "hadoop"
@@ -68,7 +73,7 @@ EOH
   action :create_if_missing
 end
 
-file "/opt/presto-server-0.58/etc/config.properties" do
+file "#{node[:prestosdir]}/etc/config.properties" do
   content <<-EOH
 coordinator=true
 datasources=jmx,hive
@@ -85,7 +90,7 @@ EOH
   action :create_if_missing
 end
 
-file "/opt/presto-server-0.58/etc/log.properties" do
+file "#{node[:prestosdir]}/etc/log.properties" do
   content <<-EOH
 com.facebook.presto=DEBUG
 EOH
@@ -95,14 +100,14 @@ EOH
   action :create_if_missing
 end
 
-directory "/opt/presto-server-0.58/etc/catalog" do
+directory "#{node[:prestosdir]}/etc/catalog" do
   mode 0755
   owner "hadoop"
   group "hadoop"
-  action :create_if_missing
+  action :create
 end
 
-file "/opt/presto-server-0.58/etc/catalog/jmx.properties" do
+file "#{node[:prestosdir]}/etc/catalog/jmx.properties" do
   content <<-EOH
 connector.name=jmx
 EOH
@@ -112,7 +117,7 @@ EOH
   action :create_if_missing
 end
 
-file "/opt/presto-server-0.58/etc/catalog/hive.properties" do
+file "#{node[:prestosdir]}/etc/catalog/hive.properties" do
   content <<-EOH
 connector.name=hive-hadoop2
 hive.metastore.uri=thrift://localhost:9083
@@ -123,23 +128,16 @@ EOH
   action :create_if_missing
 end
 
-directory "/opt/boot" do
-  mode 0755
-  owner "hadoop"
-  group "hadoop"
-  action :create_if_not_exists
-end
-
 file "/opt/boot/03-presto-server.sh" do
   content <<-EOH
 #! /bin/sh
 
 export JAVA_HOME=/usr/lib/jvm/java
 
-/opt/presto-server-0.58/bin/launcher start
+#{node[:prestosdir]}/bin/launcher start
 EOH
   mode 0755
   owner "hadoop"
   group "hadoop"
-  action :create_if_not_exists
+  action :create_if_missing
 end

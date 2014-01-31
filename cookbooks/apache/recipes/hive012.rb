@@ -1,19 +1,11 @@
 
 include_recipe "apache::base"
 
-remote_file "#{Chef::Config[:file_cache_path]}/hive-#{node[:hivever]}-bin.tar.gz" do
+remote_archive "hive-#{node[:hivever]}" do
   source "http://ftp.yz.yamagata-u.ac.jp/pub/network/apache/hive/hive-#{node[:hivever]}/hive-#{node[:hivever]}-bin.tar.gz"
-  action :create
-end
-
-bash "extract-hive012" do
-  cwd Chef::Config[:file_cache_path]
-  code <<-EOH
-    tar xfz "#{Chef::Config[:file_cache_path]}/hive-#{node[:hivever]}-bin.tar.gz" -C /opt
-    mv #{node[:hivedir]}-bin #{node[:hivedir]}
-    chown -R hadoop:hadoop #{node[:hivedir]}
-EOH
-  not_if {::File.exists?("#{node[:hivedir]}")}
+  dest node[:hivedir]
+  owner "hadoop"
+  group "hadoop"
 end
 
 file "/etc/profile.d/hive012.sh" do

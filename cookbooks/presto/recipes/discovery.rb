@@ -9,21 +9,11 @@
 
 include_recipe "apache::base"
 
-remote_file "#{Chef::Config[:file_cache_path]}/discovery-server-#{node[:prestodver]}.tar.gz" do
+remote_archive "presto-discovery-#{node[:prestodver]}" do
   source "http://central.maven.org/maven2/io/airlift/discovery/discovery-server/#{node[:prestodver]}/discovery-server-#{node[:prestodver]}.tar.gz"
-  action :create
-end
-
-bash "extract-pd" do
-  cwd Chef::Config[:file_cache_path]
-  code <<-EOH
-    tar xfz "#{Chef::Config[:file_cache_path]}/discovery-server-#{node[:prestodver]}.tar.gz" -C /opt
-    if [ "#{node[:prestoddir]}" != "/opt/discovery-server-#{node[:prestodver]}" ] ; then
-      mv /opt/discovery-server-#{node[:prestodver]} #{node[:prestoddir]}
-    fi
-    chown -R hadoop:hadoop #{node[:prestoddir]}
-EOH
-  not_if {::File.exists?("#{node[:prestoddir]}")}
+  dest node[:prestoddir]
+  owner "hadoop"
+  group "hadoop"
 end
 
 directory "#{node[:prestoddir]}/etc" do

@@ -17,21 +17,11 @@ service "sshd" do
   action :restart
 end
 
-remote_file "#{Chef::Config[:file_cache_path]}/hadoop-#{node[:hadoopver]}.tar.gz" do
+remote_archive "hadoop-#{node[:hadoopver]}" do
   source "http://ftp.meisei-u.ac.jp/mirror/apache/dist/hadoop/common/hadoop-#{node[:hadoopver]}/hadoop-#{node[:hadoopver]}.tar.gz"
-  action :create
-end
-
-bash "extract-hadoop22" do
-  cwd Chef::Config[:file_cache_path]
-  code <<-EOH
-    tar xfz "#{Chef::Config[:file_cache_path]}/hadoop-#{node[:hadoopver]}.tar.gz" -C /opt
-    if [ "#{node[:hadoopdir]}" != "/opt/hadoop-#{node[:hadoopver]}" ] ; then
-      mv /opt/hadoop-#{node[:hadoopver]} #{node[:hadoopdir]}
-    fi
-    chown -R hadoop:hadoop #{node[:hadoopdir]}
-EOH
-  not_if {::File.exists?(node[:hadoopdir])}
+  dest node[:hadoopdir]
+  owner "hadoop"
+  group "hadoop"
 end
 
 file "/etc/profile.d/hadoop22.sh" do

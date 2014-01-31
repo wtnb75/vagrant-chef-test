@@ -10,7 +10,6 @@ user "hadoop" do
   shell "/bin/sh"
   gid  "hadoop"
   password ""
-  home "#{node[:hadoopdir]}"
   action :create
 end
 

@@ -10,7 +10,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   if Vagrant.has_plugin?("vagrant-cachier")
     config.cache.auto_detect=true
   end
-  # config.vm.network :forwarded_port, guest: 80, host: 8080
+  config.vm.network :forwarded_port, guest: 8080, host: 8080
   # config.vm.network :private_network, ip: "192.168.33.10"
   # config.vm.network :public_network
   # config.ssh.forward_agent = true
@@ -28,9 +28,9 @@ SCRIPT
   # config.vm.provision "shell", inline: $once_chef 
   config.vm.provision :chef_solo do |chef|
     chef.add_recipe "base::tmpfs"
-    chef.add_recipe "base::ntp"
-    chef.add_recipe "base::timezone"
-    chef.add_recipe "base::epel"
+  #  chef.add_recipe "base::ntp"
+  #  chef.add_recipe "base::timezone"
+  #  chef.add_recipe "base::epel"
     chef.add_recipe "cloudera::prereq"
     chef.add_recipe "apache::hadoop22"
     chef.add_recipe "apache::hive012"
@@ -39,8 +39,11 @@ SCRIPT
     chef.add_recipe "presto::cli"
     chef.add_recipe "apache::maven"
     chef.add_recipe "apache::hbase"
-    chef.add_recipe "apache::zookeeper"
-    chef.add_recipe "apache::cassandra"
+  #  chef.add_recipe "apache::zookeeper"
+  #  chef.add_recipe "apache::cassandra"
+  #  chef.add_recipe "apache::storm"
+    chef.add_recipe "apache::ant"
+    chef.add_recipe "base::jenkins"
   #  chef.add_recipe "cloudera::cdh4"
   #  chef.add_recipe "cloudera::pseudo_yarn"
   #  chef.add_recipe "cloudera::hive"

@@ -9,21 +9,11 @@
 
 include_recipe "apache::base"
 
-remote_file "#{Chef::Config[:file_cache_path]}/presto-server-#{node[:prestosver]}.tar.gz" do
+remote_archive "presto-server-#{node[:prestosver]}" do
   source "http://central.maven.org/maven2/com/facebook/presto/presto-server/#{node[:prestosver]}/presto-server-#{node[:prestosver]}.tar.gz"
-  action :create
-end
-
-bash "extract-ps" do
-  cwd Chef::Config[:file_cache_path]
-  code <<-EOH
-    tar xfz "#{Chef::Config[:file_cache_path]}/presto-server-#{node[:prestosver]}.tar.gz" -C /opt
-    if [ "#{node[:prestosdir]}" != "/opt/presto-server-#{node[:prestosver]}" ] ; then
-      mv /opt/presto-server-#{node[:prestosver]} #{node[:prestosdir]}
-    fi
-    chown -R hadoop:hadoop #{node[:prestosdir]}
-EOH
-  not_if {::File.exists?("#{node[:prestosdir]}")}
+  dest node[:prestosdir]
+  owner "hadoop"
+  group "hadoop"
 end
 
 directory "#{node[:prestosdir]}/etc" do

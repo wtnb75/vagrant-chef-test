@@ -2,7 +2,7 @@
 include_recipe "apache::base"
 
 remote_archive "hbase-#{node[:hbasever]}" do
-  source "http://ftp.kddilabs.jp/infosystems/apache/hbase/hbase-#{node[:hbasever]}/hbase-#{node[:hbasever]}.tar.gz"
+  source "http://ftp.kddilabs.jp/infosystems/apache/hbase/hbase-#{node[:hbasever]}/hbase-#{node[:hbasever]}-hadoop2-bin.tar.gz"
   dest node[:hbasedir]
   owner "hadoop"
   group "hadoop"

@@ -43,7 +43,7 @@ SCRIPT
   #  chef.add_recipe "apache::cassandra"
   #  chef.add_recipe "apache::storm"
     chef.add_recipe "apache::ant"
-    chef.add_recipe "base::jenkins"
+  #  chef.add_recipe "base::jenkins"
   #  chef.add_recipe "cloudera::cdh4"
   #  chef.add_recipe "cloudera::pseudo_yarn"
   #  chef.add_recipe "cloudera::hive"

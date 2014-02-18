@@ -1,7 +1,7 @@
 
-remote_archive "spark-0.8.1" do
-  source "http://d3kbcqa49mib13.cloudfront.net/spark-0.8.1-incubating-bin-cdh4.tgz"
-  dest "/opt/spark-0.8.1"
+remote_archive "spark-#{node[:sparkver]}" do
+  source "http://d3kbcqa49mib13.cloudfront.net/spark-#{node[:sparkver]}-incubating-bin-hadoop2.tgz"
+  dest "#{node[:sparkdir]}"
   owner "hadoop"
   group "hadoop"
 end
